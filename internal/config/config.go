@@ -20,32 +20,31 @@ type Config struct {
 }
 
 func MustLoad() *Config {
-	// Load config from file
+	// Load config from file or environment variables
 	var configPath string
 
 	configPath = os.Getenv("CONFIG_PATH")
 
 	if configPath == "" {
-		flags := flag.String("config", "", "path to the configuration file")
+		flag.StringVar(&configPath, "config", "", "path to the configuration file")
 		flag.Parse()
-
-		configPath = *flags
 
 		if configPath == "" {
 			log.Fatal("Config path is not set")
 		}
 	}
 
-	if _, err := os.Stat(configPath); os.IsExist(err) {
-		log.Fatalf("config file does not exist: %s", configPath)
+	// Validate that the config file exists
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		log.Fatalf("Config file does not exist: %s", configPath)
 	}
 
 	var cfg Config
 
+	// Read configuration using cleanenv
 	err := cleanenv.ReadConfig(configPath, &cfg)
-
 	if err != nil {
-		log.Fatalf("Can not read config file: %s", err.Error())
+		log.Fatalf("Cannot read config file: %s", err.Error())
 	}
 
 	return &cfg
